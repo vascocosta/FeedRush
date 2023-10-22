@@ -78,6 +78,7 @@ fun Item(title: String, url: String, date: String) {
                 Desktop.getDesktop().browse(URI(url))
             }
         )
+        Spacer(modifier = Modifier.height(10.dp))
         Text(date)
     }
 }
@@ -87,7 +88,12 @@ fun ItemsList(items: List<NewsItem>) {
     LazyColumn {
         items(items.size) { index ->
             val item = items[index]
-            Item(item.title.toString(), item.link.toString(), item.dateTime.toString())
+            Item(
+                item.title.toString(),
+                item.link.toString(),
+                // Handle possible exceptions.
+                item.dateTime.format(DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm"))
+            )
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
@@ -126,7 +132,18 @@ fun App(urls: List<String>) {
                 Spacer(modifier = Modifier.width(20.dp))
                 Button(
                     modifier = Modifier
-                        .height(50.dp),
+                        .height(50.dp)
+                        .width((100.dp)),
+                    onClick = {
+                        filter = TextFieldValue("")
+                    }) {
+                    Text("Clear")
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Button(
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width((100.dp)),
                     onClick = {
                         fetching = "..."
                         composableScope.launch {
