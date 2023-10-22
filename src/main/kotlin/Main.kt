@@ -7,11 +7,13 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -27,7 +29,7 @@ import java.util.Locale
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime)
 
-suspend fun fetchFeeds(urls: List<String>): List<NewsItem> = coroutineScope {
+suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> = coroutineScope {
     val rssParser = RssParser()
     val deferred = urls.map {
         async {
@@ -41,13 +43,16 @@ suspend fun fetchFeeds(urls: List<String>): List<NewsItem> = coroutineScope {
     val channels = deferred.awaitAll().filterNotNull()
     val items = channels.map { it.items }.flatten()
     val formatter = DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
-    items.map {
-        try {
-            NewsItem(it.title, it.link, LocalDateTime.parse(it.pubDate, formatter))
-        } catch (_: Exception) {
-            NewsItem(it.title, it.link, LocalDateTime.now())
+    items
+        .map {
+            try {
+                NewsItem(it.title, it.link, LocalDateTime.parse(it.pubDate, formatter))
+            } catch (_: Exception) {
+                NewsItem(it.title, it.link, LocalDateTime.now())
+            }
         }
-    }.sortedByDescending { it.dateTime }
+        .filter { it.title?.lowercase(Locale.getDefault())?.contains(search.lowercase()) ?: false }
+        .sortedByDescending { it.dateTime }
 }
 
 @Composable
@@ -90,29 +95,47 @@ fun ItemsList(items: List<NewsItem>) {
 
 @Composable
 @Preview
-fun App() {
-    var fetching by remember { mutableStateOf("Fetch") }
+fun App(urls: List<String>) {
+    var fetching by remember { mutableStateOf("Update") }
     var items by remember { mutableStateOf(listOf<NewsItem>()) }
+    var search by remember { mutableStateOf(TextFieldValue("")) }
+    fetching = "..."
+
+    rememberCoroutineScope().launch {
+        items = fetchFeeds(urls, search.text)
+        fetching = "Update"
+    }
 
     MaterialTheme {
         Column(
             modifier = Modifier
                 .padding(20.dp)
         ) {
-            val composableScope = rememberCoroutineScope()
-            Button(onClick = {
-                fetching = "..."
-                composableScope.launch {
-                    items = fetchFeeds(
-                        listOf(
-                            "https://hnrss.org/newest?points=100",
-                            "https://www.motorsport.com/rss/f1/news/"
-                        )
-                    )
-                    fetching = "Fetch"
+            Row {
+                val composableScope = rememberCoroutineScope()
+                TextField(
+                    modifier = Modifier
+                        .height(50.dp),
+                    value = search,
+                    onValueChange = { newText ->
+                        search = newText
+                    },
+                    label = { Text("Filter") },
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.width(20.dp))
+                Button(
+                    modifier = Modifier
+                        .height(50.dp),
+                    onClick = {
+                        fetching = "..."
+                        composableScope.launch {
+                            items = fetchFeeds(urls, search.text)
+                            fetching = "Update"
+                        }
+                    }) {
+                    Text(fetching)
                 }
-            }) {
-                Text(fetching)
             }
             Spacer(modifier = Modifier.height(20.dp))
             ItemsList(items)
@@ -121,7 +144,11 @@ fun App() {
 }
 
 fun main() = application {
+    val urls = listOf(
+        "https://hnrss.org/newest?points=100",
+        "https://www.motorsport.com/rss/f1/news/"
+    )
     Window(title = "Feed Rush", onCloseRequest = ::exitApplication) {
-        App()
+        App(urls)
     }
 }
