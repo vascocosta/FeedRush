@@ -98,11 +98,11 @@ fun ItemsList(items: List<NewsItem>) {
 fun App(urls: List<String>) {
     var fetching by remember { mutableStateOf("Update") }
     var items by remember { mutableStateOf(listOf<NewsItem>()) }
-    var search by remember { mutableStateOf(TextFieldValue("")) }
+    var filter by remember { mutableStateOf(TextFieldValue("")) }
     fetching = "..."
 
     rememberCoroutineScope().launch {
-        items = fetchFeeds(urls, search.text)
+        items = fetchFeeds(urls, filter.text)
         fetching = "Update"
     }
 
@@ -116,9 +116,9 @@ fun App(urls: List<String>) {
                 TextField(
                     modifier = Modifier
                         .height(50.dp),
-                    value = search,
+                    value = filter,
                     onValueChange = { newText ->
-                        search = newText
+                        filter = newText
                     },
                     label = { Text("Filter") },
                     singleLine = true,
@@ -130,7 +130,7 @@ fun App(urls: List<String>) {
                     onClick = {
                         fetching = "..."
                         composableScope.launch {
-                            items = fetchFeeds(urls, search.text)
+                            items = fetchFeeds(urls, filter.text)
                             fetching = "Update"
                         }
                     }) {
