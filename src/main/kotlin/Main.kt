@@ -27,7 +27,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime)
+data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?)
 
 suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> = coroutineScope {
     val rssParser = RssParser()
@@ -42,21 +42,32 @@ suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> 
     }
     val channels = deferred.awaitAll().filterNotNull()
     val items = channels.map { it.items }.flatten()
-    val formatter = DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH)
+    val formatters = listOf(
+        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH),
+        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss O", Locale.ENGLISH)
+    )
     items
         .map {
-            try {
-                NewsItem(it.title, it.link, LocalDateTime.parse(it.pubDate, formatter))
-            } catch (_: Exception) {
-                NewsItem(it.title, it.link, LocalDateTime.now())
+            var dateTime: LocalDateTime? = null
+            for (formatter in formatters) {
+                try {
+                    dateTime = LocalDateTime.parse(it.pubDate, formatter)
+                    break
+                } catch (_: Exception) {
+                    // Here dateTime stays null and therefore is set to now below.
+                }
             }
+            if (dateTime == null) {
+                dateTime = LocalDateTime.now()
+            }
+            NewsItem(it.title, it.link, dateTime)
         }
-        .filter { it.title?.lowercase(Locale.getDefault())?.contains(search.lowercase()) ?: false }
+        .filter { it.title?.lowercase()?.contains(search.lowercase()) ?: false }
         .sortedByDescending { it.dateTime }
 }
 
 @Composable
-fun Item(title: String, url: String, date: String) {
+fun Item(title: String, url: String, date: LocalDateTime?) {
     val link = buildAnnotatedString {
         withStyle(style = SpanStyle(fontSize = 1.8.em, color = Color(50, 150, 200))) {
             append(title)
@@ -79,7 +90,7 @@ fun Item(title: String, url: String, date: String) {
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Text(date)
+        Text(date?.toString() ?: "")
     }
 }
 
@@ -91,8 +102,7 @@ fun ItemsList(items: List<NewsItem>) {
             Item(
                 item.title.toString(),
                 item.link.toString(),
-                // Handle possible exceptions.
-                item.dateTime.format(DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm"))
+                item.dateTime
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
