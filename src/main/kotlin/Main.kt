@@ -24,8 +24,17 @@ import kotlinx.coroutines.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.io.File
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?)
+
+fun readUrls(): List<String> {
+    try {
+        return File("feeds.txt").bufferedReader().readLines()
+    } catch (_: Exception) {
+        throw Exception("Could not read feed urls.")
+    }
+}
 
 suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> = coroutineScope {
     val rssParser = RssParser()
@@ -197,10 +206,12 @@ fun App(urls: List<String>) {
 }
 
 fun main() = application {
-    val urls = listOf(
-        "https://hnrss.org/newest?points=100",
-        "https://www.motorsport.com/rss/f1/news/"
-    )
+    var urls = emptyList<String>()
+    try {
+        urls = readUrls()
+    } catch (e: Exception) {
+        println(e.message)
+    }
     Window(title = "Feed Rush", onCloseRequest = ::exitApplication) {
         App(urls)
     }
