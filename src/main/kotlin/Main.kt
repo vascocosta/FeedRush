@@ -67,7 +67,7 @@ suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> 
 @Composable
 fun Item(title: String, url: String, date: LocalDateTime?) {
     val link = buildAnnotatedString {
-        withStyle(style = SpanStyle(fontSize = 1.8.em, color = Color(50, 150, 200))) {
+        withStyle(style = SpanStyle(fontSize = 1.8.em, color = Color(70, 170, 210))) {
             append(title)
         }
     }
