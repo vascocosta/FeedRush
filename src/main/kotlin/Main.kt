@@ -1,13 +1,11 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -90,7 +88,7 @@ fun Item(title: String, url: String, date: LocalDateTime?) {
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Text(date?.toString() ?: "")
+        Text(modifier = Modifier.background(Color(50, 150, 200)), text = date?.toString() ?: "")
     }
 }
 
@@ -115,6 +113,7 @@ fun App(urls: List<String>) {
     var fetching by remember { mutableStateOf("Update") }
     var items by remember { mutableStateOf(listOf<NewsItem>()) }
     var filter by remember { mutableStateOf(TextFieldValue("")) }
+    var darkTheme by remember { mutableStateOf(true) }
     fetching = "..."
 
     rememberCoroutineScope().launch {
@@ -122,50 +121,77 @@ fun App(urls: List<String>) {
         fetching = "Update"
     }
 
-    MaterialTheme {
-        Column(
-            modifier = Modifier
-                .padding(20.dp)
-        ) {
-            Row {
-                val composableScope = rememberCoroutineScope()
-                TextField(
-                    modifier = Modifier
-                        .height(50.dp),
-                    value = filter,
-                    onValueChange = { newText ->
-                        filter = newText
-                    },
-                    label = { Text("Filter") },
-                    singleLine = true,
-                )
-                Spacer(modifier = Modifier.width(20.dp))
-                Button(
-                    modifier = Modifier
-                        .height(50.dp)
-                        .width((100.dp)),
-                    onClick = {
-                        filter = TextFieldValue("")
-                    }) {
-                    Text("Clear")
+    MaterialTheme(
+        colors = if (darkTheme) darkColors(background = Color(32, 32, 32)) else {
+            lightColors()
+        }
+    ) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colors.background)) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+            ) {
+                Row {
+                    val composableScope = rememberCoroutineScope()
+                    TextField(
+                        modifier = Modifier
+                            .height(50.dp),
+                        value = filter,
+                        onValueChange = { newText ->
+                            filter = newText
+                        },
+                        label = { Text("Filter") },
+                        singleLine = true,
+                        colors = TextFieldDefaults.textFieldColors(textColor = Color(132, 132, 132))
+                    )
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Button(
+                        modifier = Modifier
+                            .height(50.dp)
+                            .width((100.dp)),
+                        onClick = {
+                            filter = TextFieldValue("")
+                        }) {
+                        Text("Clear")
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Button(
+                        modifier = Modifier
+                            .height(50.dp)
+                            .width((100.dp)),
+                        onClick = {
+                            fetching = "..."
+                            composableScope.launch {
+                                items = fetchFeeds(urls, filter.text)
+                                fetching = "Update"
+                            }
+                        }) {
+                        Text(fetching)
+                    }
+                    Spacer(modifier = Modifier.width(100.dp))
+                    Button(
+                        modifier = Modifier
+                            .height(50.dp)
+                            .width((100.dp)),
+                        onClick = {
+                            darkTheme = if (darkTheme) {
+                                false
+                            } else {
+                                true
+                            }
+                        }) {
+                        Text(
+                            if (darkTheme) {
+                                "Light"
+                            } else {
+                                "Dark"
+                            }
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-                Button(
-                    modifier = Modifier
-                        .height(50.dp)
-                        .width((100.dp)),
-                    onClick = {
-                        fetching = "..."
-                        composableScope.launch {
-                            items = fetchFeeds(urls, filter.text)
-                            fetching = "Update"
-                        }
-                    }) {
-                    Text(fetching)
-                }
+                Spacer(modifier = Modifier.height(20.dp))
+                ItemsList(items)
             }
-            Spacer(modifier = Modifier.height(20.dp))
-            ItemsList(items)
         }
     }
 }
