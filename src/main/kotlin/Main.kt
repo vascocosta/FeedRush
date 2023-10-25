@@ -29,7 +29,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.window.rememberWindowState
 
-data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?)
+data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?, val description: String?)
+
+fun stripHtml(html: String): String {
+    val htmlTagRegex = "<.*?>".toRegex()
+    return html.replace(htmlTagRegex, "")
+}
 
 fun readUrls(): List<String> {
     try {
@@ -70,14 +75,14 @@ suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> 
             if (dateTime == null) {
                 dateTime = LocalDateTime.now()
             }
-            NewsItem(it.title, it.link, dateTime)
+            NewsItem(it.title, it.link, dateTime, it.description)
         }
         .filter { it.title?.lowercase()?.contains(search.lowercase()) ?: false }
         .sortedByDescending { it.dateTime }
 }
 
 @Composable
-fun Item(title: String, url: String, date: LocalDateTime?) {
+fun Item(title: String, url: String, date: LocalDateTime?, description: String?) {
     val link = buildAnnotatedString {
         withStyle(style = SpanStyle(fontSize = 1.8.em, color = Color(70, 170, 210))) {
             append(title)
@@ -100,7 +105,9 @@ fun Item(title: String, url: String, date: LocalDateTime?) {
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Text(modifier = Modifier.background(Color(50, 150, 200)), text = date?.toString() ?: "")
+        Text(color = Color(128, 128, 128), text = date?.toString() ?: "")
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(color = Color(128, 128, 128), text = stripHtml(description ?: ""))
     }
 }
 
@@ -112,7 +119,8 @@ fun ItemsList(items: List<NewsItem>) {
             Item(
                 item.title.toString(),
                 item.link.toString(),
-                item.dateTime
+                item.dateTime,
+                item.description
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
