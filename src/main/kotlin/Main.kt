@@ -100,7 +100,7 @@ fun Item(title: String?, url: String?, date: LocalDateTime?, description: String
         ClickableText(
             text = link,
             onClick = {
-                Desktop.getDesktop().browse(URI(url))
+                Desktop.getDesktop().browse(URI(url ?: ""))
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
