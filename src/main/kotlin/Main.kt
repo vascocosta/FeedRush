@@ -1,4 +1,3 @@
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -7,33 +6,33 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.Window
 import com.prof18.rssparser.*
 import java.awt.Desktop
-import java.net.URI
-import kotlinx.coroutines.*
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import java.io.File
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.window.rememberWindowState
+import java.net.URI
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+import java.util.Locale
+import kotlinx.coroutines.*
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?, val description: String?)
 
-fun stripHtml(html: String): String {
+fun stripHtml(html: String?): String? {
     val htmlTagRegex = "<.*?>".toRegex()
-    return html.replace(htmlTagRegex, "")
+    return html?.replace(htmlTagRegex, "")
 }
 
 fun readUrls(): List<String> {
@@ -44,7 +43,7 @@ fun readUrls(): List<String> {
     }
 }
 
-suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> = coroutineScope {
+suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> = coroutineScope {
     val rssParser = RssParser()
     val deferred = urls.map {
         async {
@@ -77,15 +76,15 @@ suspend fun fetchFeeds(urls: List<String>, search: String = ""): List<NewsItem> 
             }
             NewsItem(it.title, it.link, dateTime, it.description)
         }
-        .filter { it.title?.lowercase()?.contains(search.lowercase()) ?: false }
+        .filter { it.title?.lowercase()?.contains(filter.lowercase()) ?: false }
         .sortedByDescending { it.dateTime }
 }
 
 @Composable
-fun Item(title: String, url: String, date: LocalDateTime?, description: String?) {
+fun Item(title: String?, url: String?, date: LocalDateTime?, description: String?) {
     val link = buildAnnotatedString {
         withStyle(style = SpanStyle(fontSize = 1.8.em, color = Color(70, 170, 210))) {
-            append(title)
+            append(stripHtml(title))
         }
     }
     Column(
@@ -105,9 +104,15 @@ fun Item(title: String, url: String, date: LocalDateTime?, description: String?)
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Text(color = Color(128, 128, 128), text = date?.toString()?.replace("T", " ") ?: "")
+        Text(
+            color = Color(128, 128, 128),
+            text = date?.toString()?.replace("T", " ") ?: ""
+        )
         Spacer(modifier = Modifier.height(10.dp))
-        Text(color = Color(128, 128, 128), text = stripHtml(description ?: ""))
+        Text(
+            color = Color(128, 128, 128),
+            text = stripHtml(description) ?: ""
+        )
     }
 }
 
@@ -117,8 +122,8 @@ fun ItemsList(items: List<NewsItem>) {
         items(items.size) { index ->
             val item = items[index]
             Item(
-                item.title.toString(),
-                item.link.toString(),
+                item.title,
+                item.link,
                 item.dateTime,
                 item.description
             )
@@ -128,7 +133,6 @@ fun ItemsList(items: List<NewsItem>) {
 }
 
 @Composable
-@Preview
 fun App(urls: List<String>) {
     var fetching by remember { mutableStateOf("Update") }
     var items by remember { mutableStateOf(listOf<NewsItem>()) }
