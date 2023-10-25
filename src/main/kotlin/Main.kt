@@ -25,6 +25,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.io.File
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.window.rememberWindowState
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?)
 
@@ -131,8 +134,10 @@ fun App(urls: List<String>) {
     }
 
     MaterialTheme(
-        colors = if (darkTheme) darkColors(background = Color(32, 32, 32)) else {
-            lightColors()
+        colors = if (darkTheme) {
+            darkColors(background = Color(32, 32, 32))
+        } else {
+            lightColors(background = Color(223, 223, 223))
         }
     ) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colors.background)) {
@@ -151,13 +156,24 @@ fun App(urls: List<String>) {
                         },
                         label = { Text("Filter") },
                         singleLine = true,
-                        colors = TextFieldDefaults.textFieldColors(textColor = Color(132, 132, 132))
+                        colors = TextFieldDefaults.textFieldColors(
+                            textColor = Color(132, 132, 132),
+                            cursorColor = Color(50, 150, 200),
+                            focusedIndicatorColor = Color(50, 150, 200),
+                            unfocusedIndicatorColor = Color(132, 132, 132),
+                            focusedLabelColor = Color(132, 132, 132),
+                            unfocusedLabelColor = Color(132, 132, 132),
+                        )
                     )
                     Spacer(modifier = Modifier.width(20.dp))
                     Button(
                         modifier = Modifier
                             .height(50.dp)
                             .width((100.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color(50, 150, 200),
+                            contentColor = Color(223, 223, 223)
+                        ),
                         onClick = {
                             filter = TextFieldValue("")
                         }) {
@@ -168,6 +184,10 @@ fun App(urls: List<String>) {
                         modifier = Modifier
                             .height(50.dp)
                             .width((100.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color(50, 150, 200),
+                            contentColor = Color(223, 223, 223)
+                        ),
                         onClick = {
                             fetching = "..."
                             composableScope.launch {
@@ -177,18 +197,19 @@ fun App(urls: List<String>) {
                         }) {
                         Text(fetching)
                     }
-                    Spacer(modifier = Modifier.width(100.dp))
+                    Spacer(modifier = Modifier.weight(1f))
                     Button(
                         modifier = Modifier
                             .height(50.dp)
                             .width((100.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color(50, 150, 200),
+                            contentColor = Color(223, 223, 223)
+                        ),
                         onClick = {
-                            darkTheme = if (darkTheme) {
-                                false
-                            } else {
-                                true
-                            }
-                        }) {
+                            darkTheme = !darkTheme
+                        }
+                    ) {
                         Text(
                             if (darkTheme) {
                                 "Light"
@@ -206,13 +227,20 @@ fun App(urls: List<String>) {
 }
 
 fun main() = application {
+    val windowState = rememberWindowState(size = DpSize(800.dp, 1000.dp))
+    val iconImage = painterResource("icon.png")
     var urls = emptyList<String>()
     try {
         urls = readUrls()
     } catch (e: Exception) {
         println(e.message)
     }
-    Window(title = "Feed Rush", onCloseRequest = ::exitApplication) {
+    Window(
+        title = "Feed Rush",
+        onCloseRequest = ::exitApplication,
+        icon = iconImage,
+        state = windowState
+    ) {
         App(urls)
     }
 }
