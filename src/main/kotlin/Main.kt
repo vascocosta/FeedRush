@@ -1,47 +1,23 @@
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.ui.window.Window
 import com.prof18.rssparser.*
-import java.awt.Desktop
-import java.io.File
-import java.net.URI
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 import java.util.Locale
 import kotlinx.coroutines.*
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?, val description: String?)
-
-fun stripHtml(html: String?): String? {
-    val htmlTagRegex = "<.*?>".toRegex()
-    return html?.replace(htmlTagRegex, "")
-}
-
-fun readUrls(): List<String> {
-    try {
-        return File("feeds.txt").bufferedReader().readLines()
-    } catch (_: Exception) {
-        throw Exception("Could not read feed urls.")
-    }
-}
 
 suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> = coroutineScope {
     val rssParser = RssParser()
@@ -81,57 +57,6 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
         .sortedByDescending { it.dateTime }
 }
 
-@Composable
-fun Item(title: String?, url: String?, date: LocalDateTime?, description: String?) {
-    val link = buildAnnotatedString {
-        withStyle(style = SpanStyle(fontSize = 1.8.em, color = Color(70, 170, 210))) {
-            append(stripHtml(title))
-        }
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(
-                width = 2.dp,
-                color = Color.Gray,
-                shape = RoundedCornerShape(10.dp)
-            )
-            .padding(20.dp)
-    ) {
-        ClickableText(
-            text = link,
-            onClick = {
-                Desktop.getDesktop().browse(URI(url ?: ""))
-            }
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            color = Color(128, 128, 128),
-            text = date?.toString()?.replace("T", " ") ?: ""
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            color = Color(128, 128, 128),
-            text = stripHtml(description) ?: ""
-        )
-    }
-}
-
-@Composable
-fun ItemsList(items: List<NewsItem>) {
-    LazyColumn {
-        items(items.size) { index ->
-            val item = items[index]
-            Item(
-                item.title,
-                item.link,
-                item.dateTime,
-                item.description
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-        }
-    }
-}
 
 @Composable
 fun App(urls: List<String>) {
