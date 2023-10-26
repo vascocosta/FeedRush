@@ -241,7 +241,6 @@ fun App(urls: List<String>) {
 
 fun main() = application {
     val windowState = rememberWindowState(size = DpSize(800.dp, 1000.dp))
-    val iconImage = painterResource("icon.png")
     var urls = emptyList<String>()
     try {
         urls = readUrls()
@@ -251,7 +250,7 @@ fun main() = application {
     Window(
         title = "Feed Rush",
         onCloseRequest = ::exitApplication,
-        icon = iconImage,
+        icon = painterResource("icon.png"),
         state = windowState
     ) {
         App(urls)
