@@ -58,7 +58,8 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
     val items = channels.map { it.items }.flatten()
     val formatters = listOf(
         DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH),
-        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss O", Locale.ENGLISH)
+        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss O", Locale.ENGLISH),
+        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH)
     )
     items
         .map {
