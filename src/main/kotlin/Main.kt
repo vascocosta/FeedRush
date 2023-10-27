@@ -1,5 +1,6 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
@@ -64,6 +65,8 @@ fun App(urls: List<String>) {
     var items by remember { mutableStateOf(listOf<NewsItem>()) }
     var filter by remember { mutableStateOf(TextFieldValue("")) }
     var darkTheme by remember { mutableStateOf(true) }
+    val listState = rememberLazyListState()
+
     fetching = "..."
 
     rememberCoroutineScope().launch {
@@ -131,6 +134,7 @@ fun App(urls: List<String>) {
                             composableScope.launch {
                                 items = fetchFeeds(urls, filter.text)
                                 fetching = "Update"
+                                listState.scrollToItem(0)
                             }
                         }) {
                         Text(fetching)
@@ -158,7 +162,7 @@ fun App(urls: List<String>) {
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
-                ItemsList(items)
+                ItemsList(items, listState)
             }
         }
     }
@@ -175,7 +179,7 @@ fun main() = application {
     Window(
         title = "Feed Rush",
         onCloseRequest = ::exitApplication,
-        icon = painterResource("icon.png"),
+        icon = painterResource("icon.ico"),
         state = windowState
     ) {
         App(urls)

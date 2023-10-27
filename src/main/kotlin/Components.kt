@@ -1,6 +1,7 @@
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Text
@@ -53,8 +54,10 @@ fun Item(title: String?, url: String?, date: LocalDateTime?, description: String
 }
 
 @Composable
-fun ItemsList(items: List<NewsItem>) {
-    LazyColumn {
+fun ItemsList(items: List<NewsItem>, listState: LazyListState) {
+    LazyColumn(
+        state = listState
+    ) {
         items(items.size) { index ->
             val item = items[index]
             Item(
