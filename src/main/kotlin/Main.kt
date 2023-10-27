@@ -3,8 +3,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -59,6 +63,7 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
 }
 
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun App(urls: List<String>) {
     var fetching by remember { mutableStateOf("Update") }
@@ -90,7 +95,20 @@ fun App(urls: List<String>) {
                     val composableScope = rememberCoroutineScope()
                     TextField(
                         modifier = Modifier
-                            .height(50.dp),
+                            .height(50.dp)
+                            .onKeyEvent { keyEvent ->
+                                if (keyEvent.key == Key.Enter) {
+                                    fetching = "..."
+                                    composableScope.launch {
+                                        items = fetchFeeds(urls, filter.text)
+                                        fetching = "Update"
+                                        listState.scrollToItem(0)
+                                    }
+                                    true
+                                } else {
+                                    false
+                                }
+                            },
                         value = filter,
                         onValueChange = { newText ->
                             filter = newText
