@@ -58,7 +58,12 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
             }
             NewsItem(it.title, it.link, dateTime, it.description)
         }
-        .filter { it.title?.lowercase()?.contains(filter.lowercase()) ?: false }
+        .filter {
+            val lowerTitle = it.title?.lowercase()
+            val lowerFilter = filter.lowercase()
+            val lowerLink = it.link?.lowercase()
+            lowerTitle?.contains(lowerFilter) ?: false || (lowerLink?.contains(lowerFilter) ?: false)
+        }
         .sortedByDescending { it.dateTime }
 }
 
