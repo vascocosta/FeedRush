@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 import java.util.Locale
 import kotlinx.coroutines.*
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?, val description: String?)
 
@@ -28,7 +29,8 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
     val formatters = listOf(
         DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH),
         DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss O", Locale.ENGLISH),
-        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH)
+        DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH),
+        ISO_OFFSET_DATE_TIME
     )
     items
         .map {
