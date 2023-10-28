@@ -17,6 +17,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.ui.window.Window
 import com.prof18.rssparser.*
+import java.net.URI
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 import java.util.Locale
@@ -76,6 +77,9 @@ fun App(urls: List<String>) {
     var filter by remember { mutableStateOf(TextFieldValue("")) }
     var darkTheme by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
+    val sources = listOf("ALL") + urls.map { URI(it).host.uppercase() }
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOption by remember { mutableStateOf("ALL") } // Set default option here
 
     fetching = "..."
 
@@ -162,6 +166,44 @@ fun App(urls: List<String>) {
                         }) {
                         Text(fetching)
                     }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Box {
+                        Button(
+                            modifier = Modifier
+                                .height(50.dp)
+                                .width((250.dp)),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color(50, 150, 200),
+                                contentColor = Color(223, 223, 223)
+                            ),
+                            onClick = { expanded = true }
+                        ) {
+                            Text(if (expanded) "Source" else selectedOption)
+                        }
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            sources.forEach { option ->
+                                DropdownMenuItem(onClick = {
+                                    selectedOption = option
+                                    expanded = false
+                                    fetching = "..."
+                                    composableScope.launch {
+                                        items = if (selectedOption == "ALL") {
+                                            fetchFeeds(urls, "")
+                                        } else {
+                                            fetchFeeds(urls, selectedOption)
+                                        }
+                                        fetching = "Update"
+                                        listState.scrollToItem(0)
+                                    }
+                                }) {
+                                    Text(option)
+                                }
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.weight(1f))
                     Button(
                         modifier = Modifier
@@ -192,7 +234,7 @@ fun App(urls: List<String>) {
 }
 
 fun main() = application {
-    val windowState = rememberWindowState(size = DpSize(800.dp, 1000.dp))
+    val windowState = rememberWindowState(size = DpSize(950.dp, 1000.dp))
     var urls = emptyList<String>()
     try {
         urls = readUrls()
