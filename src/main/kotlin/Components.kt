@@ -42,8 +42,9 @@ fun Item(title: String?, url: String?, date: LocalDateTime?, description: String
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            color = Color(128, 128, 128),
-            text = date?.toString()?.replace("T", " ") ?: ""
+            color = Color(100, 100, 100),
+            text =
+            "${URI(url ?: "").host.uppercase()} | ${date?.toString()?.replace("T", " ") ?: ""}"
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
