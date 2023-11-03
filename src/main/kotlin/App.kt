@@ -22,7 +22,7 @@ fun App(urls: List<String>) {
     var filter by remember { mutableStateOf(TextFieldValue("")) }
     var darkTheme by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
-    val sources = listOf("ALL") + urls.map { URI(it).host.uppercase() }
+    val sources = listOf("ALL") + urls.map { URI(it).host.uppercase().take(18).removePrefix("WWW.") }
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf("ALL") } // Set default option here
 
