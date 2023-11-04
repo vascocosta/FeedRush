@@ -1,15 +1,19 @@
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import androidx.compose.ui.window.Window
-import com.prof18.rssparser.*
-import java.time.format.DateTimeFormatter
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.coroutines.awaitStringResponse
+import com.prof18.rssparser.RssParser
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.time.LocalDateTime
-import java.util.Locale
-import kotlinx.coroutines.*
+import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
+import java.util.*
 
 data class NewsItem(val title: String?, val link: String?, val dateTime: LocalDateTime?, val description: String?)
 
@@ -18,8 +22,15 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
     val deferred = urls.map {
         async {
             try {
-                rssParser.getRssChannel(it)
-            } catch (_: Exception) {
+                val xml = Fuel
+                    .get(it)
+                    .timeout(4000)
+                    .timeoutRead(4000)
+                    .appendHeader(Pair("User-Agent", "FeedRush"))
+                    .awaitStringResponse().third
+                rssParser.parse(xml)
+            } catch (e: Exception) {
+                println(e.message)
                 null
             }
         }
