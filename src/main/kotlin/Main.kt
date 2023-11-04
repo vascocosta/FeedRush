@@ -30,7 +30,6 @@ suspend fun fetchFeeds(urls: List<String>, filter: String = ""): List<NewsItem> 
                     .awaitStringResponse().third
                 rssParser.parse(xml)
             } catch (e: Exception) {
-                println(e.message)
                 null
             }
         }
